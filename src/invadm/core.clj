@@ -55,21 +55,15 @@
 (defn cwd []
   (System/getProperty "user.dir"))
 
-(defn is-json? [filename]
-  (.endsWith filename ".json"))
-
-(defn get-io-file-name [io-file]
-  (.getName io-file))
-
 (defn get-invoice-filenames []
-  (filter is-json? (map get-io-file-name (file-seq (io/file (cwd))))))
+  (filter #(.endsWith % ".json") (map #(.getName %) (file-seq (io/file (cwd))))))
 
 (defn read-all-invoices []
   (map read-json (get-invoice-filenames)))
 
 (defn options-to-filter [options]
   (fn [invoice]
-    (every? (fn[key_](= (get options key_) (get invoice (name key_)))) (keys options))))
+    (every? #(= (get options %) (get invoice (name %))) (keys options))))
 
 (defn data [options]
   (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
