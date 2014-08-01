@@ -67,11 +67,21 @@
   (fn [invoice]
     (every? #(= (get options %) (get invoice (name %))) (keys options))))
 
+(defn pretty-print-invoice [invoice]
+  (format (->> ["Invoice #%s"
+                "Client: %s"
+                "Amount: %d %s\n"]
+               (string/join \newline))
+          (get invoice "id")
+          (get invoice "client")
+          (get invoice "amount")
+          (get invoice "currency")))
+
 (defn data [options]
   (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
 
 (defn list_ [options]
-  (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
+  (apply println (map pretty-print-invoice (filter (options-to-filter options) (read-all-invoices)))))
 
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
