@@ -20,6 +20,9 @@
         "  invadm create -c CURRENCY -r CLIENT -a AMOUNT [-f FILENAME] ID"
         "    Creates an invoice."
         ""
+        "  invadm list {-c CURRENCY, -r CLIENT, -f FILENAME}"
+        "    Lists invoices."
+        ""
         "  invadm data"
         "    Dump all the data in a JSON array."]
        (string/join \newline)))
@@ -61,8 +64,18 @@
 (defn get-invoice-filenames []
   (filter is-json? (map get-io-file-name (file-seq (io/file (cwd))))))
 
+(defn read-all-invoices []
+  (map read-json (get-invoice-filenames)))
+
 (defn data []
-  (println (json/write-str (map read-json (get-invoice-filenames)))))
+  (println (json/write-str (read-all-invoices))))
+
+(defn options-to-filter [options]
+  (fn [invoice]
+    (every? (fn[key_](= (get options key_) (get invoice (name key_)))) (keys options))))
+
+(defn list_ [options]
+  (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
 
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
@@ -74,4 +87,5 @@
     (case (first arguments)
       "create" (create options arguments)
       "data" (data)
+      "list" (list_ options)
       (exit 1 (usage summary)))))
