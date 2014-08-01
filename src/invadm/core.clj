@@ -52,7 +52,7 @@
     (not (:client options)) (exit 1 (error-msg ["-r CLIENT is required"]))
     (not (:amount options)) (exit 1 (error-msg ["-a AMOUNT is required"]))
     (not (get arguments 1)) (exit 1 (error-msg ["invoice id is required"])))
-  (write-json (id-to-filename (get arguments 1)) options))
+  (write-json (id-to-filename (get arguments 1)) (assoc options "id" (get arguments 1))))
 
 (defn cwd []
   (System/getProperty "user.dir"))
