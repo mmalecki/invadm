@@ -10,7 +10,9 @@
   [["-c" "--currency CURRENCY" "Invoice currency"]
    ["-r" "--client CLIENT" "Client"]
    ["-f" "--filename FILENAME" "Attached file"]
-   ["-a" "--amount AMOUNT" "Total amount"]])
+   ["-d" "--issue-date ISSUE_DATE" "Issue data"]
+   ["-a" "--amount AMOUNT" "Total amount"
+    :parse-fn #(Integer/parseInt %)]])
 
 (defn usage [options-summary]
   (->> ["invadm - an invoice manager"
