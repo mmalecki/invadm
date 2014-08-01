@@ -1,25 +1,27 @@
 (ns invadm.core
   (:require [clojure.tools.cli :refer [parse-opts]]
+            [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clojure.string :as string])
   (:gen-class))
 
 (def cli-options
   ;; TODO: add clever currency default
   [["-c" "--currency CURRENCY" "Invoice currency"]
-   ["-r" "--client CLIENT" "Client"]])
+   ["-r" "--client CLIENT" "Client"]
+   ["-f" "--filename FILENAME" "Attached file"]
+   ["-a" "--amount AMOUNT" "Total amount"]])
 
 (defn usage [options-summary]
   (->> ["invadm - an invoice manager"
         ""
         "Usage: invadm [options] action"
         ""
-        "Options:"
-        options-summary
+        "  invadm create -c CURRENCY -r CLIENT -a AMOUNT [-f FILENAME] ID"
+        "    Creates an invoice."
         ""
-        "Actions:"
-        "  list    List invoices"
-        "  create  Create an invoice"
-        "  status  Show overview"]
+        "  invadm data"
+        "    Dump all the data in a JSON array."]
        (string/join \newline)))
 
 (defn error-msg [errors]
@@ -29,19 +31,47 @@
   (println msg)
   (System/exit status))
 
-(defn create [options]
+(defn read-json [file]
+  (json/read-str (slurp file)))
+
+(defn write-json [file value]
+  (with-open [w (io/writer file)]
+    (.write w (json/write-str value))))
+
+(defn id-to-filename [id]
+  (str id ".json"))
+
+(defn create [options arguments]
   (cond
-    (not (:currency options)) (exit 1 (error-msg ["--currency is required"]))
-    (not (:client options)) (exit 1 (error-msg ["--client is required"]))))
+    (not (:currency options)) (exit 1 (error-msg ["-c CURRENCY is required"]))
+    (not (:client options)) (exit 1 (error-msg ["-r CLIENT is required"]))
+    (not (:amount options)) (exit 1 (error-msg ["-a AMOUNT is required"]))
+    (not (get arguments 1)) (exit 1 (error-msg ["invoice id is required"])))
+  (write-json (id-to-filename (get arguments 1)) options))
+
+(defn cwd []
+  (System/getProperty "user.dir"))
+
+(defn is-json? [filename]
+  (.endsWith filename ".json"))
+
+(defn get-io-file-name [io-file]
+  (.getName io-file))
+
+(defn get-invoice-filenames []
+  (filter is-json? (map get-io-file-name (file-seq (io/file (cwd))))))
+
+(defn data []
+  (println (json/write-str (map read-json (get-invoice-filenames)))))
 
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     ;; Handle help and error conditions
     (cond
       (:help options) (exit 0 (usage summary))
-      (not= (count arguments) 1) (exit 1 (usage summary))
       errors (exit 1 (error-msg errors)))
     ;; Execute program with options
     (case (first arguments)
-      "create" (create options)
+      "create" (create options arguments)
+      "data" (data)
       (exit 1 (usage summary)))))
