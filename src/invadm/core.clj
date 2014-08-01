@@ -17,13 +17,13 @@
         ""
         "Usage: invadm [options] action"
         ""
-        "  invadm create -c CURRENCY -r CLIENT -a AMOUNT [-f FILENAME] ID"
+        "  invadm create -c CURRENCY -r CLIENT -a AMOUNT [-d ISSUE_DATE] [-f FILENAME] ID"
         "    Creates an invoice."
         ""
         "  invadm list {-c CURRENCY, -r CLIENT, -f FILENAME}"
         "    Lists invoices."
         ""
-        "  invadm data"
+        "  invadm data {-c CURRENCY, -r CLIENT, -f FILENAME}"
         "    Dump all the data in a JSON array."]
        (string/join \newline)))
 
@@ -67,12 +67,12 @@
 (defn read-all-invoices []
   (map read-json (get-invoice-filenames)))
 
-(defn data []
-  (println (json/write-str (read-all-invoices))))
-
 (defn options-to-filter [options]
   (fn [invoice]
     (every? (fn[key_](= (get options key_) (get invoice (name key_)))) (keys options))))
+
+(defn data [options]
+  (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
 
 (defn list_ [options]
   (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
@@ -86,6 +86,6 @@
     ;; Execute program with options
     (case (first arguments)
       "create" (create options arguments)
-      "data" (data)
+      "data" (data options)
       "list" (list_ options)
       (exit 1 (usage summary)))))
