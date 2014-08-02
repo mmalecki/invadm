@@ -2,15 +2,29 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
+            [clj-time.core :as t]
+            [clj-time.format :as f]
             [clojure.string :as string])
   (:gen-class))
+
+(def date-formatter
+  (f/formatter "yyyy-MM-dd"))
+
+(defn unparse-date [date]
+  (f/unparse date-formatter date))
+
+(defn parse-date [date-string]
+  (f/parse date-formatter date-string))
 
 (def cli-options
   ;; TODO: add clever currency default
   [["-c" "--currency CURRENCY" "Invoice currency"]
    ["-r" "--client CLIENT" "Client"]
    ["-f" "--filename FILENAME" "Attached file"]
-   ["-d" "--issue-date ISSUE_DATE" "Issue data"]
+   ["-i" "--issue-date ISSUE_DATE" "Issue date"
+    :default (unparse-date (t/now))]
+   ["-n" "--net NET" "Net"
+    :parse-fn #(Integer/parseInt %)]
    ["-a" "--amount AMOUNT" "Total amount"
     :parse-fn #(Integer/parseInt %)]])
 
@@ -19,7 +33,7 @@
         ""
         "Usage: invadm [options] action"
         ""
-        "  invadm create -c CURRENCY -r CLIENT -a AMOUNT [-d ISSUE_DATE] [-f FILENAME] ID"
+        "  invadm create -c CURRENCY -r CLIENT -a AMOUNT -n NET [-i ISSUE_DATE] [-f FILENAME] ID"
         "    Creates an invoice."
         ""
         "  invadm list {-c CURRENCY, -r CLIENT, -f FILENAME}"
@@ -51,8 +65,13 @@
     (not (:currency options)) (exit 1 (error-msg ["-c CURRENCY is required"]))
     (not (:client options)) (exit 1 (error-msg ["-r CLIENT is required"]))
     (not (:amount options)) (exit 1 (error-msg ["-a AMOUNT is required"]))
+    (not (:net options)) (exit 1 (error-msg ["-n NET is required"]))
     (not (get arguments 1)) (exit 1 (error-msg ["invoice id is required"])))
-  (write-json (id-to-filename (get arguments 1)) (assoc options "id" (get arguments 1))))
+  (write-json (id-to-filename (get arguments 1))
+              (assoc options
+                     "id" (get arguments 1)
+                     "due-date" (unparse-date (t/plus (parse-date (:issue-date options))
+                                                     (t/days (:net options)))))))
 
 (defn cwd []
   (System/getProperty "user.dir"))
