@@ -71,7 +71,7 @@
               (assoc options
                      "id" (get arguments 1)
                      "due-date" (unparse-date (t/plus (parse-date (:issue-date options))
-                                                     (t/days (:net options)))))))
+                                                      (t/days (:net options)))))))
 
 (defn cwd []
   (System/getProperty "user.dir"))
