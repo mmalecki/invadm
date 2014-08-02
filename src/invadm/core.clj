@@ -87,12 +87,17 @@
     (every? #(= (get options %) (get invoice (name %))) (keys options))))
 
 (defn pretty-print-invoice [invoice]
-  (format (->> ["Invoice #%s"
+  (format (->> ["\nInvoice #%s"
                 "Client: %s"
-                "Amount: %d %s\n"]
+                "Issue date: %s"
+                "Due date: %s (Net %d)"
+                "Amount: %d %s"]
                (string/join \newline))
           (get invoice "id")
           (get invoice "client")
+          (get invoice "issue-date")
+          (get invoice "due-date")
+          (get invoice "net")
           (get invoice "amount")
           (get invoice "currency")))
 
