@@ -105,7 +105,8 @@
   (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
 
 (defn list_ [options]
-  (apply println (map pretty-print-invoice (filter (options-to-filter options) (read-all-invoices)))))
+  (apply println (map pretty-print-invoice (filter (options-to-filter options)
+                                                   (read-all-invoices)))))
 
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
