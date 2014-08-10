@@ -11,6 +11,9 @@
 (defn cwd []
   (System/getProperty "user.dir"))
 
+(defn sum [v]
+  (reduce + 0 v))
+
 (def date-formatter
   (f/formatter "yyyy-MM-dd"))
 
@@ -19,6 +22,9 @@
 
 (defn parse-date [date-string]
   (f/parse date-formatter date-string))
+
+(defn format-amount [amount currency]
+  (format "%d %s" amount currency))
 
 (defn read-json [file]
   (json/read-str (slurp file)))
@@ -47,7 +53,9 @@
    "Client" (get invoice "client")
    "Issue date" (get invoice "issue-date")
    "Due date" (get invoice "due-date")
-   "Amount" (format "%d %s" (get invoice "amount") (get invoice "currency"))})
+   "Amount" (format-amount (get invoice "amount") (get invoice "currency"))
+   "Paid" (format-amount (sum (map #(get % "amount") (get invoice "payments")))
+                         (get invoice "currency"))})
 
 (defn options-to-filter [options]
   (fn [invoice]
@@ -105,6 +113,7 @@
   (write-invoice (get arguments 1)
                  (assoc options
                         "id" (get arguments 1)
+                        "payments" []
                         "due-date" (unparse-date (t/plus (parse-date (:issue-date options))
                                                          (t/days (:net options)))))))
 
