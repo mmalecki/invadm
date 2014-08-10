@@ -23,6 +23,8 @@
    ["-f" "--filename FILENAME" "Attached file"]
    ["-i" "--issue-date ISSUE_DATE" "Issue date"
     :default (unparse-date (t/now))]
+   ["-p" "--paid-on" "Paid on"
+    :default (unparse-date (t/now))]
    ["-n" "--net NET" "Net"
     :parse-fn #(Integer/parseInt %)]
    ["-a" "--amount AMOUNT" "Total amount"
@@ -40,7 +42,10 @@
         "    Lists invoices."
         ""
         "  invadm data {-c CURRENCY, -r CLIENT, -f FILENAME}"
-        "    Dump all the data in a JSON array."]
+        "    Dump all the data in a JSON array."
+        ""
+        "  invadm record-payment [-a AMOUNT] [-p PAID_ON] ID"
+        "    Record a payment of AMOUNT for invoice ID."]
        (string/join \newline)))
 
 (defn error-msg [errors]
@@ -114,6 +119,16 @@
   (apply println (map pretty-print-invoice (filter (options-to-filter options)
                                                    (read-all-invoices)))))
 
+(defn record-payment [options arguments]
+  (let [id (get arguments 1)
+        amount (:amount options)
+        invoice (read-invoice id)]
+    (write-invoice id (assoc invoice
+                             "payments" (conj (get invoice "payments")
+                                              {:date (:paid-on options)
+                                               :amount (or (:amount options)
+                                                           (get invoice "amount"))})))))
+
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     ;; Handle help and error conditions
@@ -125,4 +140,5 @@
       "create" (create options arguments)
       "data" (data options)
       "list" (list_ options)
+      "record-payment" (record-payment options arguments)
       (exit 1 (usage summary)))))
