@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [clj-time.core :as t]
             [clj-time.format :as f]
+            [clojure.pprint :as pprint]
             [clojure.string :as string])
   (:gen-class))
 
@@ -42,19 +43,11 @@
   (map read-json (get-invoice-filenames)))
 
 (defn pretty-print-invoice [invoice]
-  (format (->> ["\nInvoice #%s"
-                "Client: %s"
-                "Issue date: %s"
-                "Due date: %s (Net %d)"
-                "Amount: %d %s"]
-               (string/join \newline))
-          (get invoice "id")
-          (get invoice "client")
-          (get invoice "issue-date")
-          (get invoice "due-date")
-          (get invoice "net")
-          (get invoice "amount")
-          (get invoice "currency")))
+  {"ID" (get invoice "id")
+   "Client" (get invoice "client")
+   "Issue date" (get invoice "issue-date")
+   "Due date" (get invoice "due-date")
+   "Amount" (format "%d %s" (get invoice "amount") (get invoice "currency"))})
 
 (defn options-to-filter [options]
   (fn [invoice]
@@ -119,8 +112,9 @@
   (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
 
 (defn list_ [options]
-  (apply println (map pretty-print-invoice (filter (options-to-filter options)
-                                                   (read-all-invoices)))))
+  (pprint/print-table (map pretty-print-invoice
+                           (filter (options-to-filter options)
+                                   (read-all-invoices)))))
 
 (defn record-payment [options arguments]
   (let [id (get arguments 1)
