@@ -60,6 +60,12 @@
 (defn id-to-filename [id]
   (str id ".json"))
 
+(defn read-invoice [id]
+  (read-json (id-to-filename id)))
+
+(defn write-invoice [id value]
+  (write-json (id-to-filename id) value))
+
 (defn create [options arguments]
   (cond
     (not (:currency options)) (exit 1 (error-msg ["-c CURRENCY is required"]))
@@ -67,11 +73,11 @@
     (not (:amount options)) (exit 1 (error-msg ["-a AMOUNT is required"]))
     (not (:net options)) (exit 1 (error-msg ["-n NET is required"]))
     (not (get arguments 1)) (exit 1 (error-msg ["invoice id is required"])))
-  (write-json (id-to-filename (get arguments 1))
-              (assoc options
-                     "id" (get arguments 1)
-                     "due-date" (unparse-date (t/plus (parse-date (:issue-date options))
-                                                      (t/days (:net options)))))))
+  (write-invoice (get arguments 1)
+                 (assoc options
+                        "id" (get arguments 1)
+                        "due-date" (unparse-date (t/plus (parse-date (:issue-date options))
+                                                         (t/days (:net options)))))))
 
 (defn cwd []
   (System/getProperty "user.dir"))
