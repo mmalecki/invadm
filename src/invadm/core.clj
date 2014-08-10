@@ -48,14 +48,20 @@
 (defn read-all-invoices []
   (map read-json (get-invoice-filenames)))
 
+(defn sum-payments [invoice]
+  (sum (map #(get % "amount") (get invoice "payments"))))
+
 (defn pretty-print-invoice [invoice]
   {"ID" (get invoice "id")
    "Client" (get invoice "client")
    "Issue date" (get invoice "issue-date")
    "Due date" (get invoice "due-date")
    "Amount" (format-amount (get invoice "amount") (get invoice "currency"))
-   "Paid" (format-amount (sum (map #(get % "amount") (get invoice "payments")))
+   "Paid" (format-amount (sum-payments invoice)
                          (get invoice "currency"))})
+
+(defn add-convenience-fields [invoice]
+  (assoc invoice "paid" (sum-payments invoice)))
 
 (defn options-to-filter [options]
   (fn [invoice]
@@ -118,7 +124,9 @@
                                                          (t/days (:net options)))))))
 
 (defn data [options]
-  (println (json/write-str (filter (options-to-filter options) (read-all-invoices)))))
+  (println (json/write-str (map add-convenience-fields
+                                (filter (options-to-filter options)
+                                        (read-all-invoices))))))
 
 (defn list_ [options]
   (pprint/print-table (map pretty-print-invoice
