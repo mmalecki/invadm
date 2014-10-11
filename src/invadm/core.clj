@@ -58,8 +58,8 @@
 
 (defn serialize-invoice [invoice]
   (assoc invoice
-         "issue-date" (unparse-date (get invoice "issue-date"))))
-         ;; "payments" (map serialize-payment (get invoice "payments"))))
+         "issue-date" (unparse-date (get invoice "issue-date"))
+         "payments" (map serialize-payment (get invoice "payments"))))
 
 (defn parse-invoice [json]
   (add-convenience-fields (assoc json
@@ -109,8 +109,8 @@
 
 (defn parse-today-default [value]
   (cond
-    (nil? value) (unparse-date (t/now))
-    (string? value) value))
+    (nil? value) (t/now)
+    (string? value) (parse-date value)))
 
 (defn usage [options-summary]
   (->> ["invadm - an invoice manager"
@@ -169,8 +169,8 @@
         invoice (read-invoice id)]
     (write-invoice id (assoc invoice
                              "payments" (conj (get invoice "payments")
-                                              {:date (:paid-on options)
-                                               :amount (or (:amount options)
+                                              {"date" (:paid-on options)
+                                               "amount" (or (:amount options)
                                                            (get invoice "amount"))})))))
 
 (defn -main [& args]
