@@ -122,9 +122,7 @@
   (write-invoice (get arguments 1)
                  (assoc options
                         "id" (get arguments 1)
-                        "payments" []
-                        "due-date" (unparse-date (t/plus (parse-date (:issue-date options))
-                                                         (t/days (:net options)))))))
+                        "payments" [])))
 
 (defn data [options]
   (println (json/write-str (map add-convenience-fields
