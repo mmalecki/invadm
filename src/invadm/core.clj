@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [clj-time.core :as t]
             [clj-time.format :as f]
+            [clj-time.coerce :as c]
             [clojure.pprint :as pprint]
             [clojure.string :as string])
   (:gen-class))
@@ -23,6 +24,10 @@
 (defn parse-date [date-string]
   (f/parse date-formatter date-string))
 
+(defn compare-invoices-by-issue-date [a b]
+  (compare (c/to-long (get a "issue-date"))
+           (c/to-long (get b "issue-date"))))
+
 (defn format-amount [amount currency]
   (format "%.2f %s" (float amount) currency))
 
@@ -36,33 +41,54 @@
 (defn id-to-filename [id]
   (str id ".json"))
 
-(defn read-invoice [id]
-  (read-json (id-to-filename id)))
+(defn sum-payments [invoice]
+  (sum (map #(get % "amount") (get invoice "payments"))))
 
-(defn write-invoice [id value]
-  (write-json (id-to-filename id) value))
+(defn add-convenience-fields [invoice]
+  (assoc invoice
+         "paid" (sum-payments invoice)
+         "due-date" (t/plus (get invoice "issue-date") (t/days (get invoice "net")))))
+
+(defn remove-convenience-fields [invoice]
+  (dissoc invoice "paid" "due-date"))
+
+(defn serialize-payment [payment]
+  (assoc payment
+        "date" (unparse-date (get payment "date"))))
+
+(defn serialize-invoice [invoice]
+  (assoc invoice
+         "issue-date" (unparse-date (get invoice "issue-date"))))
+         ;; "payments" (map serialize-payment (get invoice "payments"))))
+
+(defn parse-invoice [json]
+  (add-convenience-fields (assoc json
+                                 "issue-date" (parse-date (get json "issue-date")))))
+
+(defn unparse-invoice [invoice]
+  (serialize-invoice (remove-convenience-fields invoice)))
+
+(defn read-invoice [id]
+  (parse-invoice (read-json (id-to-filename id))))
+
+(defn write-invoice [id invoice]
+  (write-json (id-to-filename id) (unparse-invoice invoice)))
 
 (defn get-invoice-filenames []
   (filter #(.endsWith % ".json") (map #(.getName %) (file-seq (io/file (cwd))))))
 
 (defn read-all-invoices []
-  (map read-json (get-invoice-filenames)))
-
-(defn sum-payments [invoice]
-  (sum (map #(get % "amount") (get invoice "payments"))))
+  (map parse-invoice (map read-json (get-invoice-filenames))))
 
 (defn pretty-print-invoice [invoice]
   {"ID" (get invoice "id")
    "From" (get invoice "from")
    "To" (get invoice "to")
-   "Issue date" (get invoice "issue-date")
-   "Due date" (get invoice "due-date")
+   "Issue date" (unparse-date (get invoice "issue-date"))
+   "Due date" (unparse-date (get invoice "due-date"))
    "Amount" (format-amount (get invoice "amount") (get invoice "currency"))
    "Paid" (format-amount (sum-payments invoice)
                          (get invoice "currency"))})
-
-(defn add-convenience-fields [invoice]
-  (assoc invoice "paid" (sum-payments invoice)))
 
 (defn options-to-filter [options]
   (fn [invoice]
@@ -125,14 +151,17 @@
                         "payments" [])))
 
 (defn data [options]
-  (println (json/write-str (map add-convenience-fields
-                                (filter (options-to-filter options)
-                                        (read-all-invoices))))))
+  (println (json/write-str (map serialize-invoice
+                                (map remove-convenience-fields ;; TODO: not have to do that
+                                     (sort compare-invoices-by-issue-date
+                                           (filter (options-to-filter options)
+                                                   (read-all-invoices))))))))
 
 (defn list_ [options]
   (pprint/print-table (map pretty-print-invoice
-                           (filter (options-to-filter options)
-                                   (read-all-invoices)))))
+                           (sort compare-invoices-by-issue-date
+                                 (filter (options-to-filter options)
+                                         (read-all-invoices))))))
 
 (defn record-payment [options arguments]
   (let [id (get arguments 1)
@@ -145,7 +174,8 @@
                                                            (get invoice "amount"))})))))
 
 (defn -main [& args]
-  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+  (let [{:keys [options arguments errors summary]}
+        (parse-opts args cli-options)]
     ;; Handle help and error conditions
     (cond
       (:help options) (exit 0 (usage summary))
