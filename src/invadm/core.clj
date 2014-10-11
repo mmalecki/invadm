@@ -24,7 +24,7 @@
   (f/parse date-formatter date-string))
 
 (defn format-amount [amount currency]
-  (format "%d %s" amount currency))
+  (format "%.2f %s" (float amount) currency))
 
 (defn read-json [file]
   (json/read-str (slurp file)))
