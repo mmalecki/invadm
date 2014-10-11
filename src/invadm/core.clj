@@ -53,7 +53,8 @@
 
 (defn pretty-print-invoice [invoice]
   {"ID" (get invoice "id")
-   "Client" (get invoice "client")
+   "From" (get invoice "from")
+   "To" (get invoice "to")
    "Issue date" (get invoice "issue-date")
    "Due date" (get invoice "due-date")
    "Amount" (format-amount (get invoice "amount") (get invoice "currency"))
@@ -65,12 +66,13 @@
 
 (defn options-to-filter [options]
   (fn [invoice]
-    (every? #(= (println %) (get options %) (get invoice (name %))) (keys options))))
+    (every? #(= (get options %) (get invoice (name %))) (keys options))))
 
 (def cli-options
   ;; TODO: add clever currency default
   [["-c" "--currency CURRENCY" "Invoice currency"]
-   ["-r" "--client CLIENT" "Client"]
+   [nil "--from FROM" "From"]
+   [nil "--to TO" "To"]
    ["-f" "--filename FILENAME" "Attached file"]
    ["-i" "--issue-date ISSUE_DATE" "Issue date"]
    ["-p" "--paid-on PAID_ON" "Paid on"]
@@ -89,13 +91,13 @@
         ""
         "Usage: invadm [options] action"
         ""
-        "  invadm create -c CURRENCY -r CLIENT -a AMOUNT -n NET [-i ISSUE_DATE] [-f FILENAME] ID"
+        "  invadm create -c CURRENCY --from FROM --to TO -a AMOUNT -n NET [-i ISSUE_DATE] [-f FILENAME] ID"
         "    Creates an invoice."
         ""
-        "  invadm list {-c CURRENCY, -r CLIENT, -f FILENAME}"
+        "  invadm list {-c CURRENCY, --from FROM, --to TO, -f FILENAME}"
         "    Lists invoices."
         ""
-        "  invadm data {-c CURRENCY, -r CLIENT, -f FILENAME}"
+        "  invadm data {-c CURRENCY, --from FROM, --to TO, -f FILENAME}"
         "    Dump all the data in a JSON array."
         ""
         "  invadm record-payment [-a AMOUNT] [-p PAID_ON] ID"
@@ -112,7 +114,8 @@
 (defn create [options arguments]
   (cond
     (not (:currency options)) (exit 1 (error-msg ["-c CURRENCY is required"]))
-    (not (:client options)) (exit 1 (error-msg ["-r CLIENT is required"]))
+    (not (:from options)) (exit 1 (error-msg ["--from FROM is required"]))
+    (not (:to options)) (exit 1 (error-msg ["--to TO is required"]))
     (not (:amount options)) (exit 1 (error-msg ["-a AMOUNT is required"]))
     (not (:net options)) (exit 1 (error-msg ["-n NET is required"]))
     (not (get arguments 1)) (exit 1 (error-msg ["invoice id is required"])))
