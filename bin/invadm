@@ -2,4 +2,4 @@
 this=$(realpath $0)
 dir=$(dirname $this)
 jar=$(ls $dir/../target/uberjar/invadm-*-standalone.jar)
-java -jar $jar $*
+java -jar $jar "$@"
