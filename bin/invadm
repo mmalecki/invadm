@@ -1,2 +1,5 @@
 #!/usr/bin/env bash
-java -jar $(dirname $0)/../target/uberjar/invadm-*-standalone.jar
+this=$(realpath $0)
+dir=$(dirname $this)
+jar=$(ls $dir/../target/uberjar/invadm-*-standalone.jar)
+java -jar $jar $*
