@@ -1,6 +1,8 @@
 {
   "name": "invadm",
   "version": "0.0.0",
+  "description": "Manage invoices from command line",
+  "keywords": ["invoice", "accounting"],
   "author": "Maciej Małecki <me@mmalecki.com>",
   "scripts": {
     "prepublish": "lein uberjar"

@@ -1,2 +1,2 @@
 # invadm
-Invoice management system in Clojure.
+Manage invoices from command line.
