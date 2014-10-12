@@ -140,13 +140,15 @@
         "    Create an invoice."
         ""
         "  invadm list {-c CURRENCY, --from FROM, --to TO, -f FILENAME}"
-        "    List invoices."
+        "    List invoices, filtered according to arguments."
         ""
         "  invadm data {-c CURRENCY, --from FROM, --to TO, -f FILENAME}"
-        "    Dump all the data in a JSON array."
+        "    Dump all the data in a JSON array, filtered according to arguments."
         ""
         "  invadm record-payment [-a AMOUNT] [-p PAID_ON] ID"
-        "    Record a payment of AMOUNT for invoice ID."]
+        "    Record a payment of AMOUNT for invoice ID, paid on PAID_ON if given."
+        ""
+        "All dates should be formatted like YYYY-MM-DD."]
        (string/join \newline)))
 
 (defn error-msg [errors]
