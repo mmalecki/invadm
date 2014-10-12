@@ -44,6 +44,21 @@
 (defn sum-payments [invoice]
   (sum (map #(get % "amount") (get invoice "payments"))))
 
+(defn sum-key-by-currency [invoices amount-key]
+  (reduce (fn [totals invoice]
+            (let [invoice-currency (get invoice "currency")]
+              (assoc totals
+                     invoice-currency (+ (or (get totals invoice-currency) 0)
+                                         (get invoice amount-key)))))
+          {}
+          invoices))
+
+(defn sum-amount-by-currency [invoices]
+  (sum-key-by-currency invoices "amount"))
+
+(defn sum-paid-by-currency [invoices]
+  (sum-key-by-currency invoices "paid"))
+
 (defn add-convenience-fields [invoice]
   (assoc invoice
          "paid" (sum-payments invoice)
@@ -89,6 +104,10 @@
    "Amount" (format-amount (get invoice "amount") (get invoice "currency"))
    "Paid" (format-amount (sum-payments invoice)
                          (get invoice "currency"))})
+
+(defn print-by-currency [sum]
+  (doseq [keyval sum]
+    (println (str "  " (format-amount (val keyval) (key keyval))))))
 
 (defn options-to-filter [options]
   (fn [invoice]
@@ -164,10 +183,15 @@
                                                    (read-all-invoices))))))))
 
 (defn list_ [options]
-  (pprint/print-table (map pretty-print-invoice
-                           (sort compare-invoices-by-issue-date
-                                 (filter (options-to-filter options)
-                                         (read-all-invoices))))))
+  (let [invoices (sort compare-invoices-by-issue-date
+                       (filter (options-to-filter options)
+                               (read-all-invoices)))]
+    (pprint/print-table (map pretty-print-invoice invoices))
+    (println "\nTotal:")
+    (print-by-currency (sum-amount-by-currency invoices))
+    (println "\nPaid:")
+    (print-by-currency (sum-paid-by-currency invoices))))
+
 
 (defn record-payment [options arguments]
   (let [id (get arguments 1)
