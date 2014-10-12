@@ -4,6 +4,8 @@ Manage invoices from command line.
 **Disclaimer**: this tool is experimental. Keep its repository in git.
 
 ## Installation
+`invadm` depends on `lein` and Java being installed.
+
 ```sh
 npm install -g invadm
 ```
