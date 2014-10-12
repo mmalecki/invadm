@@ -146,9 +146,15 @@
     (not (:net options)) (exit 1 (error-msg ["-n NET is required"]))
     (not (get arguments 1)) (exit 1 (error-msg ["invoice id is required"])))
   (write-invoice (get arguments 1)
-                 (assoc options
-                        "id" (get arguments 1)
-                        "payments" [])))
+                 {"id" (get arguments 1)
+                  "to" (:to options)
+                  "from" (:from options)
+                  "amount" (:amount options)
+                  "currency" (:currency options)
+                  "issue-date" (:issue-date options)
+                  "filename" (:filename options)
+                  "net" (:net options)
+                  "payments" []}))
 
 (defn data [options]
   (println (json/write-str (map serialize-invoice
