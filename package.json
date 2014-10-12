@@ -1,6 +1,6 @@
 {
   "name": "invadm",
-  "version": "0.1.0",
+  "version": "0.1.0-1",
   "description": "Manage invoices from command line",
   "keywords": ["invoice", "accounting"],
   "author": "Maciej Małecki <me@mmalecki.com>",

@@ -1,4 +1,4 @@
-(defproject invadm "0.1.0",
+(defproject invadm "0.1.0-1",
   :description "Manage invoices from command line",
   :url "https://github.com/mmalecki/invadm"
   :license {:name "Eclipse Public License"
