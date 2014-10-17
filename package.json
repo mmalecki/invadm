@@ -5,7 +5,7 @@
   "keywords": ["invoice", "accounting"],
   "author": "Maciej Małecki <me@mmalecki.com>",
   "scripts": {
-    "preinstall": "lein uberjar"
+    "preinstall": "rm -rf target/uberjar && lein uberjar"
   },
   "bin": {
     "invadm": "./bin/invadm"
