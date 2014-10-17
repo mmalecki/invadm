@@ -124,7 +124,7 @@
    ["-n" "--net NET" "Net"
     :parse-fn #(Integer/parseInt %)]
    ["-a" "--amount AMOUNT" "Total amount"
-    :parse-fn #(Integer/parseInt %)]])
+    :parse-fn #(Float/parseFloat %)]])
 
 (defn parse-today-default [value]
   (cond
