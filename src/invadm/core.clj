@@ -111,7 +111,15 @@
 
 (defn options-to-filter [options]
   (fn [invoice]
-    (every? #(= (get options %) (get invoice (name %))) (keys options))))
+    (and
+      (if (contains? options :gt) (t/after?
+                                     (get invoice "issue-date")
+                                     (:gt options)) true)
+      (if (contains? options :lt) (t/before?
+                                     (get invoice "issue-date")
+                                     (:lt options)) true)
+      (every? #(= (get options %) (get invoice (name %)))
+              (filter #(not (or (= % :lt) (= % :gt))) (keys options))))))
 
 (def cli-options
   ;; TODO: add clever currency default
@@ -124,7 +132,11 @@
    ["-n" "--net NET" "Net"
     :parse-fn #(Integer/parseInt %)]
    ["-a" "--amount AMOUNT" "Total amount"
-    :parse-fn #(Float/parseFloat %)]])
+    :parse-fn #(Float/parseFloat %)]
+   [nil "--lt DATE" "List invoices with date earlier than DATE"
+    :parse-fn parse-date]
+   [nil "--gt DATE" "List invoices with date later than DATE"
+    :parse-fn parse-date]])
 
 (defn parse-today-default [value]
   (cond
@@ -139,7 +151,7 @@
         "  invadm create -c CURRENCY --from FROM --to TO -a AMOUNT -n NET [-i ISSUE_DATE] [-f FILENAME] ID"
         "    Create an invoice."
         ""
-        "  invadm list {-c CURRENCY, --from FROM, --to TO, -f FILENAME}"
+        "  invadm list {-c CURRENCY, --from FROM, --to TO, -f FILENAME, --lt|--gt DATE}"
         "    List invoices, filtered according to arguments."
         ""
         "  invadm data {-c CURRENCY, --from FROM, --to TO, -f FILENAME}"
